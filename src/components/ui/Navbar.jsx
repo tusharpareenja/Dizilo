@@ -26,10 +26,11 @@ function Navbar() {
 
                 {/* Desktop Menu */}
                 <div className='space-x-6 hidden md:flex'>
-                    <a href="#" className='hover:text-gray-400'>Discover</a>
+                    <a href="/home" className='hover:text-gray-400'>Marketplace</a>
                     <a href="#" className='hover:text-gray-400'>My Library</a>
-                    <a href="#" className='hover:text-gray-400'>Community</a>
-                    <a href="#" className='hover:text-gray-400'>Publish</a>
+                    <a href="/community" className='hover:text-gray-400'>Community</a>
+                    <a href="/assetpublisher" className='hover:text-gray-400'>Publish</a>
+                    <a href="/explore" className='hover:text-gray-400'>Explore</a>
                 </div>
 
                 {/* Mobile Menu Button */}

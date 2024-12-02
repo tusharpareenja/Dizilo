@@ -83,7 +83,7 @@ export default function Sounds() {
         ))}
         {/* Add See More Button at the end */}
         <Link
-          to="/product/Graphics"
+          to="/product/Sound"
           className="flex items-center justify-center relative aspect-[3/2] rounded-lg overflow-hidden bg-zinc-800 bg-opacity-50 cursor-pointer hover:bg-opacity-70 transition-opacity"
         >
           <Button className="text-white text-lg font-medium">See More</Button>

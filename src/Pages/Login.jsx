@@ -1,16 +1,92 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import Spline from '@splinetool/react-spline';
-
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Checkbox } from '../components/ui/checkbox';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 
-export default function Component() {
+export default function LoginRegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const navigate = useNavigate();
+
+  const handleLogin = async (event) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+    const form = event.currentTarget;
+    const username = form.elements.namedItem('username').value;
+    const password = form.elements.namedItem('password').value;
+
+    try {
+      const response = await axios.post(
+        'http://localhost:3000/user/login',
+        { username, password },
+        { withCredentials: true }
+      );
+      setSuccess('Login Successful');
+      console.log(response.data);
+      navigate('/home');
+    } catch (err) {
+      setError('Login failed. Please check your credentials.');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async (event) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    const form = event.currentTarget;
+    const name = form.elements.namedItem('name').value;
+    const username = form.elements.namedItem('username').value;
+    const password = form.elements.namedItem('password').value;
+    const email = form.elements.namedItem('email').value;
+    const confirmPassword = form.elements.namedItem('confirm-password').value;
+
+    // Email validation regex
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address.');
+      setIsLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        'http://localhost:3000/user/register',
+        { username, name, password, email },
+        { withCredentials: true }
+      );
+      setSuccess('Registration successful! Please log in.');
+      console.log(response.data);
+    } catch (err) {
+      setError('Registration failed. Please try again.');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+};
+
 
   const toggleForm = () => setIsLogin(!isLogin);
 
@@ -18,12 +94,12 @@ export default function Component() {
     <div className="min-h-screen w-full flex items-center justify-center bg-black p-4">
       <Card className="w-full max-w-[1000px] grid md:grid-cols-2 overflow-hidden rounded-3xl shadow-xl">
         {/* Left Side - Spline Animation */}
-        <div className="bg-gray-100 flex items-center justify-center overflow-hidden z-30 ">
+        <div className="bg-gray-100 flex items-center justify-center overflow-hidden z-10 max-h-[600px]">
           <Spline scene="https://prod.spline.design/wFbLNLgN95bbv1iQ/scene.splinecode" />
         </div>
 
         {/* Right Side - Auth Form */}
-        <div className="p-8 md:p-12 relative">
+        <div className="p-8 md:p-12 relative h-[600px] overflow-y-auto">
           {/* Plus Icon */}
           <div className="absolute top-4 right-4">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -37,18 +113,26 @@ export default function Component() {
               <p className="text-gray-500">{isLogin ? 'Please enter your details' : 'Please fill in your information'}</p>
             </div>
 
-            <form className="space-y-4">
+            <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
+              {/* Form fields */}
               {!isLogin && (
                 <div className="space-y-2">
                   <Label htmlFor="name">Name</Label>
-                  <Input id="name" placeholder="Enter your name" type="text" />
+                  <Input id="name" name="name" placeholder="Enter your name" type="text" required />
                 </div>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" placeholder="Enter your email" type="email" />
+                <Label htmlFor="username">Username</Label>
+                <Input id="username" name="username" placeholder="Enter your username" type="text" required />
               </div>
+
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" name="email" placeholder="Enter your email" type="email" required />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
@@ -56,7 +140,9 @@ export default function Component() {
                   <Input
                     id="password"
                     placeholder="Enter your password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
+                    required
                   />
                   <Button
                     type="button"
@@ -77,6 +163,19 @@ export default function Component() {
                 </div>
               </div>
 
+              {!isLogin && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <Input
+                    id="confirm-password"
+                    placeholder="Confirm your password"
+                    name="confirm-password"
+                    type="password"
+                    required
+                  />
+                </div>
+              )}
+
               {isLogin && (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
@@ -94,11 +193,12 @@ export default function Component() {
                 </div>
               )}
 
-              <Button className="w-full bg-black text-white hover:bg-gray-900" size="lg">
-                {isLogin ? 'Log in' : 'Sign up'}
+              <Button className="w-full bg-black text-white hover:bg-gray-900" size="lg" type="submit" disabled={isLoading}>
+                {isLoading ? 'Processing...' : (isLogin ? 'Log in' : 'Sign up')}
               </Button>
 
               <Button
+                type="button"
                 variant="outline"
                 className="w-full"
                 size="lg"
@@ -113,27 +213,34 @@ export default function Component() {
                     fill="#34A853"
                   />
                   <path
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    d="M5.84 13.99c-.28-.8-.44-1.66-.44-2.49s.16-1.69.44-2.49V6.61H2.18C1.74 8.29 1.5 10.14 1.5 12s.24 3.71.68 5.39h3.66z"
                     fill="#FBBC05"
                   />
                   <path
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    d="M12 4.25c1.57 0 2.92.54 4.02 1.46L18.45 3.2C16.74 2.02 14.51 1.25 12 1.25 7.7 1.25 3.99 3.72 2.18 6.61l3.66 2.83c.87-2.6 3.3-4.53 6.16-4.53z"
                     fill="#EA4335"
                   />
                 </svg>
-                {isLogin ? 'Log in with Google' : 'Sign up with Google'}
+                Sign up with Google
               </Button>
-            </form>
 
-            <div className="text-center text-sm text-gray-500">
-              {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
-              <button onClick={toggleForm} className="font-medium text-black hover:underline">
-                {isLogin ? 'Sign Up' : 'Log In'}
-              </button>
-            </div>
+              <p className="text-center text-sm text-gray-500">
+                {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
+                <button
+                  type="button"
+                  onClick={toggleForm}
+                  className="font-semibold text-gray-800"
+                >
+                  {isLogin ? 'Sign up here' : 'Log in here'}
+                </button>
+              </p>
+            </form>
+            {error && <div className="text-red-600 mt-4">{error}</div>}
+            {success && <div className="text-green-600 mt-4">{success}</div>}
           </div>
         </div>
       </Card>
     </div>
   );
 }
+
